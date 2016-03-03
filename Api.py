@@ -52,7 +52,7 @@ class Api:
 					course_slot = details[9].string
 				except IndexError:
 					course_code = details[1].string
-					course_fac = details[9].string
+					course_fac = details[9].string.split(" - ")[0]
 					course_slot = details[7].string
 				cur_course = Course(course_code, course_slot, course_fac, "xyz")
 				courses.append(cur_course)
@@ -68,19 +68,16 @@ class Api:
 			soup = BeautifulSoup(res.text, "html.parser")
 			try:
 				faculty_soup = soup.table.findAll('table')[1]
+				faculty_soup = soup.table.findAll('table')[1]
 				for factag in faculty_soup.findAll('tr'):
 					if factag['bgcolor'] == "#E1ECF2":
 						fac_name = factag.findAll('td')[3].string.split(" - ")[1]
 						if fac_name == course.course_faculty:
 							course.course_secret = factag.form.td.findAll('input')[1]['value']
-							print course.course_secret
 							break
+
 			except IndexError:
 				print "Course page not available for course " + course.course_code
-				courses.remove(course)
-			if course.course_secret == "xyz":
-				print "Course page not available for course " + course.course_code
-				courses.remove(course)
 		return courses
 
 

@@ -34,7 +34,6 @@ if login[0] == True:
 		db.commit()
 	else:
 		courses = db.query(Course)
-		print courses.count()
 else:
 	print "Invalid Credentials Quitting the program"
 
