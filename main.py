@@ -4,6 +4,7 @@ import base
 from Course import Course 
 from User import User
 from Api import Api
+import tkFileDialog
 engine = create_engine("sqlite:///course.db")
 base.Base.metadata.create_all(engine, checkfirst = True)
 Session = sessionmaker(bind = engine)
@@ -18,7 +19,6 @@ if userdata.count() == 0:
 	user_password = raw_input("Enter password: ")
 	user.user_regno = user_regno
 	user.user_password = user_password
-	db.add(user)
 	first = True
 else:
 	for firstu in userdata:
@@ -30,10 +30,18 @@ if login[0] == True:
 	loggedin = True
 	if first:
 		courses = Api.get_courses(cookies)
+		folder_path = tkFileDialog.askdirectory()
+		user.user_folder = folder_path
+		db.add(user)
 		db.add_all(courses)
 		db.commit()
 	else:
 		courses = db.query(Course)
+		folder_path = user.folder_path
+		for course in courses:
+			Api.download(course, cookies, folder_path)
+			break
+
 else:
 	print "Invalid Credentials Quitting the program"
 

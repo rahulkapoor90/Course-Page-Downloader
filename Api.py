@@ -5,11 +5,16 @@ from CaptchaParser import CaptchaParser
 from PIL import Image
 from Course import Course
 import json
+import os
+import urllib as url
+import re
 captcha_url = 'https://academics.vit.ac.in/student/captcha.asp'
 submit_url = 'https://academics.vit.ac.in/student/stud_login_submit.asp'
 timetable_url = 'https://academics.vit.ac.in/student/timetable_ws.asp'
 home_url = 'https://academics.vit.ac.in/student/stud_home.asp'
 course_page_url = 'https://academics.vit.ac.in/student/coursepage_view.asp'
+course_contents_url  = 'https://academics.vit.ac.in/student/coursepage_view3.asp'
+pattern = r'(FALL|WIN|SUM){1}SEM[0-9]{4}-[0-9]{2}_CP[0-9]{4}.*_[A-Z]{2,4}[0-9]{2}_'
 class Api:
 	@staticmethod
 	def login(regno, password):
@@ -79,5 +84,35 @@ class Api:
 			except IndexError:
 				print "Course page not available for course " + course.course_code
 		return courses
+	@staticmethod
+	def download(course, cookies, folder_path):
+		directory = course.course_code + " - " + course.course_faculty
+		location = os.path.join(folder_path, directory)
+		if not os.path.exists(location):
+			os.makedirs(location)
+		data = {}
+		data['sem'] = "WS"
+		data['crsplancode'] = course.course_secret
+		data['crpnvwcmd'] = "View"
+		res = req.post(course_contents_url, cookies = cookies, data = data)
+		soup = BeautifulSoup(res.text, "html.parser")
+		counter = 1
+		for link in soup.findAll('a'):
+			link_name = link.get('href').split('/')[-1]
+			if re.match(pattern, link_name):
+				file_name = str(counter) + "." + re.split(pattern, link_name)[-1]
+				if os.path.isfile(os.path.join(location,file_name)):
+					print "Already Downloaded " + file_name
+				else:
+					print "Downloading " + file_name
+					res = req.get(link.get('href'), stream = True)
+					with open(os.path.join(location,file_name), 'wb') as out_file:
+						shutil.copyfileobj(res.raw, out_file)
+			counter = counter + 1
+				
+
+
+
+		
 
 
