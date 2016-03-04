@@ -8,6 +8,7 @@ import json
 import os
 import urllib as url
 import re
+from clint.textui import progress
 captcha_url = 'https://academics.vit.ac.in/student/captcha.asp'
 submit_url = 'https://academics.vit.ac.in/student/stud_login_submit.asp'
 timetable_url = 'https://academics.vit.ac.in/student/timetable_ws.asp'
@@ -33,15 +34,15 @@ class Api:
 		data['passwd'] = password
 		data['vrfcd'] = captcha
 		print "Logging In..."
-		login_res = req.post(submit_url, data = data, cookies = cookies)
-		req.get(home_url, cookies = cookies) # just to make sure that session id is validated
+		login_res = req.post(submit_url, data = data, cookies = cookies, timeout = 40)
+		req.get(home_url, cookies = cookies, timeout = 40) # just to make sure that session id is validated
 		success = True
 		res = [success, cookies]
 		return res
 	@staticmethod
 	def get_courses(cookies):
 		print "Getting your list of courses..."
-		timetable_res = req.get(timetable_url, cookies = cookies)
+		timetable_res = req.get(timetable_url, cookies = cookies, timeout = 40)
 		soup = BeautifulSoup(timetable_res.text, "html.parser")
 		ttsoup = soup.findAll('table')[1]
 		courses = []
@@ -68,7 +69,7 @@ class Api:
 			params['sem'] = 'WS'
 			params['slt'] = course.course_slot
 			params['crs'] = course.course_code
-			res = req.get(course_page_url, cookies = cookies, params = params)
+			res = req.get(course_page_url, cookies = cookies, params = params, timeout = 40)
 			print "Getting details of course and faculties " + course.course_code
 			soup = BeautifulSoup(res.text, "html.parser")
 			try:
@@ -86,6 +87,7 @@ class Api:
 		return courses
 	@staticmethod
 	def download(course, cookies, folder_path):
+		print "Downloading " + course.course_faculty + " Materials "
 		directory = course.course_code + " - " + course.course_faculty
 		location = os.path.join(folder_path, directory)
 		if not os.path.exists(location):
@@ -94,21 +96,24 @@ class Api:
 		data['sem'] = "WS"
 		data['crsplancode'] = course.course_secret
 		data['crpnvwcmd'] = "View"
-		res = req.post(course_contents_url, cookies = cookies, data = data)
+		res = req.post(course_contents_url, cookies = cookies, data = data, timeout = 40)
 		soup = BeautifulSoup(res.text, "html.parser")
-		counter = 1
 		for link in soup.findAll('a'):
 			link_name = link.get('href').split('/')[-1]
 			if re.match(pattern, link_name):
-				file_name = str(counter) + "." + re.split(pattern, link_name)[-1]
+				file_name = re.split(pattern, link_name)[-1]
 				if os.path.isfile(os.path.join(location,file_name)):
 					print "Already Downloaded " + file_name
 				else:
 					print "Downloading " + file_name
 					res = req.get(link.get('href'), stream = True)
-					with open(os.path.join(location,file_name), 'wb') as out_file:
-						shutil.copyfileobj(res.raw, out_file)
-			counter = counter + 1
+					with open(os.path.join(location,file_name), 'wb') as f:
+						total_length = int(res.headers.get('content-length'))
+						for chunk in progress.bar(res.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1):
+							if chunk:
+								f.write(chunk)
+								f.flush()
+							
 				
 
 
