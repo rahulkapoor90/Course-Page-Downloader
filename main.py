@@ -47,7 +47,8 @@ if login[0] == True:
 		folder_path = user.user_folder
 		print folder_path
 	for course in courses:
-			Api.download(course, cookies, folder_path)
+			if course.course_secret != "xyz":
+				Api.download(course, cookies, folder_path)
 	print "All done Successfully"
 
 else:
