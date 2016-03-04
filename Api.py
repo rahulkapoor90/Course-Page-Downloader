@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 import shutil
-import requests as req
+import requests
 from CaptchaParser import CaptchaParser
 from PIL import Image
 from Course import Course
@@ -9,6 +9,7 @@ import os
 import urllib as url
 import re
 from clint.textui import progress
+from requests.adapters import HTTPAdapter
 captcha_url = 'https://academics.vit.ac.in/student/captcha.asp'
 submit_url = 'https://academics.vit.ac.in/student/stud_login_submit.asp'
 timetable_url = 'https://academics.vit.ac.in/student/timetable_ws.asp'
@@ -16,6 +17,8 @@ home_url = 'https://academics.vit.ac.in/student/stud_home.asp'
 course_page_url = 'https://academics.vit.ac.in/student/coursepage_view.asp'
 course_contents_url  = 'https://academics.vit.ac.in/student/coursepage_view3.asp'
 pattern = r'(FALL|WIN|SUM){1}SEM[0-9]{4}-[0-9]{2}_CP[0-9]{4}.*_[A-Z]{2,4}[0-9]{2}_'
+req = requests.Session()
+req.mount('http://academics.vit.ac.in', HTTPAdapter(max_retries=6))
 class Api:
 	@staticmethod
 	def login(regno, password):
