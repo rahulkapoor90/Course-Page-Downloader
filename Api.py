@@ -35,10 +35,22 @@ class Api:
 		data['vrfcd'] = captcha
 		print "Logging In..."
 		login_res = req.post(submit_url, data = data, cookies = cookies, timeout = 40)
-		req.get(home_url, cookies = cookies, timeout = 40) # just to make sure that session id is validated
-		success = True
-		res = [success, cookies]
-		return res
+		soup = BeautifulSoup(login_res.text, "html.parser")
+		try:
+			x = ((soup.findAll('table')[1]).td.font.string.split(" - "))[1]
+			if x == regno:
+				success = True
+				req.get(home_url, cookies = cookies, timeout = 40) # just to make sure that session id is validated
+				res = [success, cookies]
+				return res
+			else:
+				success = False
+				res = [success, None]
+				return res
+		except:
+				success = False
+				res = [success, None]
+				return res
 	@staticmethod
 	def get_courses(cookies):
 		print "Getting your list of courses..."
