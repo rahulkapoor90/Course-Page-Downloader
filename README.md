@@ -21,3 +21,6 @@ Downloads contents of VIT Academics Course Page and organizes them nicely
 5. `python main.py`
 
 To clear cached data remove `course.db` file.
+
+## Known Issues
+1. Need to work on timeouts.
